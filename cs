@@ -139,8 +139,10 @@ if [ "$#" -eq 2 ] && [ $1 == 'update' ]; then
 			 && echo Updated entry as follows: && echo Entry id: $2
 			cat $tmpfile
 		else
-			echo Database not updated
+			printf '\nNo changes were made to the entry\n'
 		fi
+	else
+		printf '\nNo changes were made to the entry\n'
 	fi
 
 	rm $tmpfile
