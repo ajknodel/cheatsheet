@@ -126,19 +126,25 @@ fi
 # update
 if [ "$#" -eq 2 ] && [ $1 == 'update' ]; then
 	tmpfile="/tmp/$2-update-entry.txt"
-	sqlite3 $DBFILE "select commands from main where entryid = $2" > $tmpfile
+	originalfile="/tmp/$2-update-entry-original.txt"
+	sqlite3 $DBFILE "select commands from main where entryid = $2" | tee $tmpfile $originalfile
 	$EDITOR $tmpfile
 
-	read -r -p "Are you sure you want to update this entry? [y/n] " response
-	if [ $response == "y" ]; then
-		sqlite3 $DBFILE "UPDATE main set commands = '$(cat $tmpfile | sed "s/'/\\'\\'/g")' WHERE entryid == $2"\
-		 && echo Updated entry as follows: && echo Entry id: $2
-		cat $tmpfile
-	else
-		echo Database not updated
+	checkdiff=$(diff $tmpfile $originalfile | wc -l | awk '{print $1}')
+
+	if [ $checkdiff -ne 0 ]; then
+		read -r -p "Are you sure you want to update this entry? [y/n] " response
+		if [ $response == "y" ]; then
+			sqlite3 $DBFILE "UPDATE main set commands = '$(cat $tmpfile | sed "s/'/\\'\\'/g")' WHERE entryid == $2"\
+			 && echo Updated entry as follows: && echo Entry id: $2
+			cat $tmpfile
+		else
+			echo Database not updated
+		fi
 	fi
 
 	rm $tmpfile
+	rm $originalfile
 fi
 
 #delete
